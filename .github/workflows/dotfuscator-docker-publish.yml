@@ -48,7 +48,8 @@ jobs:
           name: Built assemblies
           path: artifacts
           
-      
+      - name: List downloaded assemblies
+        run: ls -R artifacts
           
       - name: Login to dockerhub
         if: github.event_name != 'pull_request'
@@ -58,6 +59,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Build and push to docker
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v2
         with:
           context: .
