@@ -1,0 +1,80 @@
+name: dotfuscator-docker-publish-demo
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+      
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore -c Release -o artifacts
+      
+    - name: Upload .NET built assemblies for next job in sequence
+      uses: actions/upload-artifact@v2
+      with:
+        name: Built assemblies
+        path: artifacts/
+        
+  docker:
+    
+    runs-on: ubuntu-latest
+    
+    needs: [build]
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        
+      - name: Download build .NET assemblies from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: Built assemblies
+          path: artifacts
+          
+      - name: List downloaded assemblies
+        run: ls -R artifacts
+        
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ secrets.CONTAINERREGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/dotfuscatordemo
+
+      - name: Login to dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push to docker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}, ${{ secrets.CONTAINERREGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/dotfuscatordemo:TEST
+          labels: ${{ steps.meta.outputs.labels }}
+          file: Dockerfile
+          
+      - name: Run and Test docker image
+        run: docker run --rm ${{ secrets.CONTAINERREGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/dotfuscatordemo:TEST
+          
+      
+      
