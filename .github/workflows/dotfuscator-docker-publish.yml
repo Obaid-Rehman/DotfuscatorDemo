@@ -50,9 +50,6 @@ jobs:
           
       - name: List downloaded assemblies
         run: ls -R artifacts
-        
-      - name: Check json files have not been tampered by Github actions
-        run: cat artifacts/*.json
           
       - name: Login to dockerhub
         if: github.event_name != 'pull_request'
