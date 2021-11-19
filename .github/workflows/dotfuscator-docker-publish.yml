@@ -33,6 +33,7 @@ jobs:
         path: artifacts/
         
   docker:
+    if: github.event_name != 'pull_request'
     
     runs-on: ubuntu-latest
     
