@@ -45,7 +45,7 @@ jobs:
       - name: Download build .NET assemblies from build job
         uses: actions/download-artifact@v2
         with:
-          name: Build assemblies
+          name: Built assemblies
           path: artifacts
           
       
